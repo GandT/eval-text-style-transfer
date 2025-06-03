@@ -5,6 +5,9 @@ description = "evaluate text style transfer sentences."
 authors = [
     {name = "GandT",email = "19548351+GandT@users.noreply.github.com"}
 ]
+packages = [
+  { include = "eval_tst" }
+]
 license = "MIT"
 readme = "README.md"
 requires-python = ">=3.13,<4"
