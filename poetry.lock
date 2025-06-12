@@ -498,18 +498,6 @@ files = [
 ]
 
 [[package]]
-name = "jsonline"
-version = "0.2.1"
-description = ""
-optional = false
-python-versions = ">=3.7.0,<4"
-groups = ["main"]
-files = [
-    {file = "jsonline-0.2.1-py3-none-any.whl", hash = "sha256:ce382f885d5cc2a87deca326fadab218bc0ee2a2a1d4aca7a59f99af86d38ee7"},
-    {file = "jsonline-0.2.1.tar.gz", hash = "sha256:920eeb36f4a3b1e9d12df3f7883a22951890c99dd7faf3d38b469ccb2f4a3179"},
-]
-
-[[package]]
 name = "kiwisolver"
 version = "1.4.8"
 description = "A fast implementation of the Cassowary constraint solver"
@@ -2212,4 +2200,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<4"
-content-hash = "2bf36400c3a825149b2a59a39a16398fe0e2e2e7476c7546a69abb724f4a833c"
+content-hash = "46d048b5ed895fb9a61d7fd104383d4ded24cfd8f4013332c3817dd677e9c6e0"
