@@ -198,6 +198,6 @@ cython_debug/
 #####################
 
 # input and output json files
-sentence.jsonl
-*_evaluated.jsonl
+sentence.json
+*_evaluated.json
 summary.json
