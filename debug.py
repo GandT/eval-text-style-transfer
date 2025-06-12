@@ -14,58 +14,89 @@ from sacrebleu                   import TER
 from bert_score                  import score as bert_score
 from torchmetrics.text           import CHRFScore
 
-import os
+import json
 
 # 分かち書き
 def tokenize_japanese(text):
     mecab = MeCab.Tagger('-Owakati')
     return mecab.parse(text).strip()
 
+def analyze_text(json_input):
+    result_list = []
+
+    for line in json_input:
+        analyzed_line = {
+            'original':   line['original'],
+            'transfered': line['transfered'],
+            'references': line['references']
+        }
+
+        # 分かち書き
+        original_tokens    = tokenize_japanese(analyzed_line['original'])
+        transferred_tokens = tokenize_japanese(analyzed_line['transfered'])
+        reference_tokens   = tokenize_japanese(analyzed_line['references'])
+        
+        # リスト化
+        original_tokens_list    =    original_tokens.split()
+        transferred_tokens_list = transferred_tokens.split()
+        reference_tokens_list   =   reference_tokens.split()
+
+        # BLEU
+        bleu_score = sentence_bleu([reference_tokens_list], transferred_tokens_list)
+        analyzed_line['BLEU'] = bleu_score
+
+        # ROUGE
+        scorer = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=False)
+        rouge_scores = scorer.score(reference_tokens, transferred_tokens)
+        analyzed_line['ROUGE'] = {
+           'ROUGE-1': rouge_scores['rouge1'],
+           'ROUGE-2': rouge_scores['rouge2'],
+           'ROUGE-L': rouge_scores['rougeL'],
+        }
+
+        # METEOR
+        meteor = meteor_score([reference_tokens_list], transferred_tokens_list)
+        analyzed_line['METEOR'] = meteor
+
+        # TER
+        ter = TER()
+        ter_score = ter.sentence_score(transferred_tokens, [reference_tokens]).score
+        analyzed_line['TER'] = ter_score
+
+        # BERTScore（日本語対応）
+        P, R, F1 = bert_score([transferred_tokens], [reference_tokens], lang='ja')
+        analyzed_line['BERTScore'] = {
+            'score': float(F1),
+            'P':     float(P),
+            'R':     float(R)
+        }
+
+        # ChrF
+        chrf= CHRFScore()
+        chrf_score = chrf([transferred_tokens], [reference_tokens])
+        analyzed_line['ChrF'] = float(chrf_score)
+
+        result_list.append(analyzed_line)
+
+    return result_list
+
+
 def main():
-  # 日本語サンプルデータ
-  original_text    = os.environ['ORIG_T']
-  transferred_text = os.environ['TRAN_T']
-  reference_text   = os.environ['REFE_T']
+    input_path = "sample_input.json"
+    output_path = "sample_input_evaluated.json"
 
-  # 分かち書き
-  original_tokens    = tokenize_japanese(original_text)
-  transferred_tokens = tokenize_japanese(transferred_text)
-  reference_tokens   = tokenize_japanese(reference_text)
+    # --- 入力の読み込み（JSON → リスト）---
+    with open(input_path, "r", encoding="utf-8") as file_input:
+        # reader はイテレータなのでリスト内包表記で全レコードを取得
+        json_input = json.load(file_input)
 
-  original_tokens_list    =    original_tokens.split()
-  transferred_tokens_list = transferred_tokens.split()
-  reference_tokens_list   =   reference_tokens.split()
+    # --- 分析関数に渡して評価結果を取得 ---
+    results = analyze_text(json_input)
 
-  # BLEU
-  bleu_score = sentence_bleu([reference_tokens_list], transferred_tokens_list)
-  print(f"BLEU: {bleu_score:.4f}")
-
-  # ROUGE
-  scorer = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=False)
-  rouge_scores = scorer.score(reference_tokens, transferred_tokens)
-  print(f"ROUGE-1: {rouge_scores['rouge1'].fmeasure:.4f}")
-  print(f"ROUGE-2: {rouge_scores['rouge2'].fmeasure:.4f}")
-  print(f"ROUGE-L: {rouge_scores['rougeL'].fmeasure:.4f}")
-
-  # METEOR
-  meteor = meteor_score([reference_tokens_list], transferred_tokens_list)
-  print(f"METEOR: {meteor:.4f}")
-
-  # TER
-  ter = TER()
-  ter_score = ter.sentence_score(transferred_tokens, [reference_tokens]).score
-  print(f"TER: {ter_score:.4f}")
-
-  # BERTScore（日本語対応）
-  P, R, F1 = bert_score([transferred_tokens], [reference_tokens], lang='ja')
-  print(f"BERTScore (F1): {F1.mean().item():.4f}")
-  print(f"P: {P}")
-  print(f"R: {R}")
-
-  # ChrF
-  chrf= CHRFScore()
-  chrf_score = chrf([transferred_tokens], [reference_tokens])
-  print(f"ChrF: {chrf_score:.4f}")
+    # --- 出力の書き出し（リスト → JSON）---
+    with open(output_path, "w", encoding="utf-8") as file_output:
+        # ensure_ascii=False で日本語をエスケープせず、indent=2 で見やすく整形
+        json.dump(results, file_output, ensure_ascii=False, indent=2)
 
 
 if __name__ == '__main__':
