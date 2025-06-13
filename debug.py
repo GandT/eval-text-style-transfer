@@ -25,10 +25,16 @@ def analyze_text(json_input):
     result_list = []
 
     for line in json_input:
+        # 分析結果格納用辞書
+        baseline_result = {}
+        proposed_result = {}
+
         analyzed_line = {
             'original':   line['original'],
             'transfered': line['transfered'],
-            'references': line['references']
+            'references': line['references'],
+            'baseline': baseline_result,
+            'proposed': proposed_result
         }
 
         # 分かち書き
@@ -42,39 +48,59 @@ def analyze_text(json_input):
         reference_tokens_list   =   reference_tokens.split()
 
         # BLEU
-        bleu_score = sentence_bleu([reference_tokens_list], transferred_tokens_list)
-        analyzed_line['BLEU'] = bleu_score
+        baseline_blue = sentence_bleu([ original_tokens_list], transferred_tokens_list)
+        proposed_bleu = sentence_bleu([reference_tokens_list], transferred_tokens_list)
+        analyzed_line['baseline']['BLEU'] = baseline_bleu_score
+        analyzed_line['proposed']['BLEU'] = proposed_bleu_score
 
         # ROUGE
         scorer = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=False)
-        rouge_scores = scorer.score(reference_tokens, transferred_tokens)
-        analyzed_line['ROUGE'] = {
-           'ROUGE-1': rouge_scores['rouge1'],
-           'ROUGE-2': rouge_scores['rouge2'],
-           'ROUGE-L': rouge_scores['rougeL'],
+        baseline_rouge_scores = scorer.score(reference_tokens,    original_tokens)
+        proposed_rouge_scores = scorer.score(reference_tokens, transferred_tokens)
+        analyzed_line['baseline']['ROUGE'] = {
+           'ROUGE-1': baseline_rouge_scores['rouge1'],
+           'ROUGE-2': baseline_rouge_scores['rouge2'],
+           'ROUGE-L': baseline_rouge_scores['rougeL'],
+        }
+        analyzed_line['proposed']['ROUGE'] = {
+           'ROUGE-1': proposed_rouge_scores['rouge1'],
+           'ROUGE-2': proposed_rouge_scores['rouge2'],
+           'ROUGE-L': proposed_rouge_scores['rougeL'],
         }
 
         # METEOR
-        meteor = meteor_score([reference_tokens_list], transferred_tokens_list)
-        analyzed_line['METEOR'] = meteor
+        baseline_meteor = meteor_score([reference_tokens_list],    original_tokens_list)
+        proposed_meteor = meteor_score([reference_tokens_list], transferred_tokens_list)
+        analyzed_line['baseline']['METEOR'] = baseline_meteor
+        analyzed_line['proposed']['METEOR'] = proposed_meteor
 
         # TER
         ter = TER()
-        ter_score = ter.sentence_score(transferred_tokens, [reference_tokens]).score
-        analyzed_line['TER'] = ter_score
+        baseline_ter_score = ter.sentence_score(   original_tokens, [reference_tokens]).score
+        proposed_ter_score = ter.sentence_score(transferred_tokens, [reference_tokens]).score
+        analyzed_line['baseline']['TER'] = baseline_ter_score
+        analyzed_line['proposed']['TER'] = proposed_ter_score
 
         # BERTScore（日本語対応）
-        P, R, F1 = bert_score([transferred_tokens], [reference_tokens], lang='ja')
-        analyzed_line['BERTScore'] = {
-            'score': float(F1),
-            'P':     float(P),
-            'R':     float(R)
+        baseline_P, baseline_R, baseline_F1 = bert_score([   original_tokens], [reference_tokens], lang='ja')
+        proposed_P, proposed_R, proposed_F1 = bert_score([transferred_tokens], [reference_tokens], lang='ja')
+        analyzed_line['baseline']['BERTScore'] = {
+            'score': float(baseline_F1),
+            'P':     float(baseline_P),
+            'R':     float(baseline_R)
+        }
+        analyzed_line['proposed']['BERTScore'] = {
+            'score': float(proposed_F1),
+            'P':     float(proposed_P),
+            'R':     float(proposed_R)
         }
 
         # ChrF
         chrf= CHRFScore()
-        chrf_score = chrf([transferred_tokens], [reference_tokens])
-        analyzed_line['ChrF'] = float(chrf_score)
+        baseline_chrf_score = chrf([   original_tokens], [reference_tokens])
+        proposed_chrf_score = chrf([transferred_tokens], [reference_tokens])
+        analyzed_line['baseline']['ChrF'] = float(baseline_chrf_score)
+        analyzed_line['proposed']['ChrF'] = float(proposed_chrf_score)
 
         result_list.append(analyzed_line)
 
