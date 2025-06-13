@@ -48,10 +48,10 @@ def analyze_text(json_input):
         reference_tokens_list   =   reference_tokens.split()
 
         # BLEU
-        baseline_blue = sentence_bleu([ original_tokens_list], transferred_tokens_list)
+        baseline_bleu = sentence_bleu([ original_tokens_list], transferred_tokens_list)
         proposed_bleu = sentence_bleu([reference_tokens_list], transferred_tokens_list)
-        analyzed_line['baseline']['BLEU'] = baseline_bleu_score
-        analyzed_line['proposed']['BLEU'] = proposed_bleu_score
+        analyzed_line['baseline']['BLEU'] = baseline_bleu
+        analyzed_line['proposed']['BLEU'] = proposed_bleu
 
         # ROUGE
         scorer = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=False)
