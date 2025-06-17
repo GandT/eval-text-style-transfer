@@ -26,15 +26,15 @@ def analyze_text(json_input):
 
     for line in json_input:
         analyzed_line = {
-            'original':   line['original'],
-            'transfered': line['transfered'],
-            'references': line['references']
+            'original':    line['original'],
+            'transferred': line['transferred'],
+            'reference':   line['reference']
         }
 
         # 分かち書き
         original_tokens    = tokenize_japanese(analyzed_line['original'])
-        transferred_tokens = tokenize_japanese(analyzed_line['transfered'])
-        reference_tokens   = tokenize_japanese(analyzed_line['references'])
+        transferred_tokens = tokenize_japanese(analyzed_line['transferred'])
+        reference_tokens   = tokenize_japanese(analyzed_line['reference'])
         
         # リスト化
         original_tokens_list    =    original_tokens.split()
